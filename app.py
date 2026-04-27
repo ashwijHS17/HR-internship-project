@@ -4,88 +4,89 @@ import numpy as np
 import pickle
 from sklearn.preprocessing import StandardScaler
 
-# 1. Load the model
-model = pickle.load(open('kr_model.pkl', 'rb')) 
+# Page config (NEW)
+st.set_page_config(page_title="HR Attrition Predictor", page_icon="👨‍💼", layout="wide")
 
-# 2. App Title
-st.title('HR Attrition Prediction App')
-st.write("Enter employee details to predict the likelihood of attrition.")
+# Load model
+model = pickle.load(open('kr_model.pkl', 'rb'))
 
-# 3. Define Inputs based on Task_8-1 Features
-col1, col2 = st.columns(2)
+# Custom CSS (NEW UI)
+st.markdown("""
+    <style>
+    .main-title {text-align:center; font-size:40px; font-weight:bold; color:#2E86C1;}
+    .sub-title {text-align:center; font-size:18px; color:gray;}
+    .result-box {padding:20px; border-radius:15px; text-align:center; font-size:22px;}
+    </style>
+""", unsafe_allow_html=True)
 
-with col1:
-    age = st.number_input('Age', min_value=18, max_value=60, value=30)
-    monthly_income = st.number_input('Monthly Income', min_value=1000, max_value=20000, value=5000)
-    distance = st.number_input('Distance From Home', min_value=1, max_value=30, value=5)
-    total_working_years = st.number_input('Total Working Years', min_value=0, max_value=40, value=10)
-    
-with col2:
-    job_level = st.slider('Job Level', 1, 5, 2)
-    job_satisfaction = st.slider('Job Satisfaction (1-4)', 1, 4, 3)
-    env_satisfaction = st.slider('Environment Satisfaction (1-4)', 1, 4, 3)
-    overtime = st.selectbox('Overtime', ('Yes', 'No'))
+# Title section
+st.markdown("<p class='main-title'>HR Attrition Prediction App</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>Predict whether an employee is likely to leave the company</p>", unsafe_allow_html=True)
 
-# 4. Preprocessing & Encoding
-overtime_val = 1 if overtime == 'Yes' else 0 
+st.write("")
+
+# Sidebar inputs (UPDATED)
+st.sidebar.header("Enter Employee Details")
+
+age = st.sidebar.number_input('Age', 18, 60, 30)
+monthly_income = st.sidebar.number_input('Monthly Income', 1000, 20000, 5000)
+distance = st.sidebar.number_input('Distance From Home', 1, 30, 5)
+total_working_years = st.sidebar.number_input('Total Working Years', 0, 40, 10)
+
+job_level = st.sidebar.slider('Job Level', 1, 5, 2)
+job_satisfaction = st.sidebar.slider('Job Satisfaction', 1, 4, 3)
+env_satisfaction = st.sidebar.slider('Environment Satisfaction', 1, 4, 3)
+overtime = st.sidebar.selectbox('Overtime', ('Yes', 'No'))
+
+st.write("### Click below to predict")
+
+# Encoding
+overtime_val = 1 if overtime == 'Yes' else 0
 
 input_data = {
-    'Age': age,
-    'BusinessTravel': 1, 
-    'DailyRate': 800,
-    'Department': 1,
-    'DistanceFromHome': distance,
-    'Education': 3,
-    'EducationField': 1,
-    'EmployeeCount': 1,
-    'EmployeeNumber': 1,
-    'EnvironmentSatisfaction': env_satisfaction,
-    'Gender': 1,
-    'HourlyRate': 65,
-    'JobInvolvement': 3,
-    'JobLevel': job_level,
-    'JobRole': 1,
-    'JobSatisfaction': job_satisfaction,
-    'MaritalStatus': 1,
-    'MonthlyIncome': monthly_income,
-    'MonthlyRate': 14000,
-    'NumCompaniesWorked': 1,
-    'Over18': 1,
-    'OverTime': overtime_val,
-    'PercentSalaryHike': 15,
-    'PerformanceRating': 3,
-    'RelationshipSatisfaction': 3,
-    'StandardHours': 80, 
-    'StockOptionLevel': 0,
-    'TotalWorkingYears': total_working_years,
-    'TrainingTimesLastYear': 2,
-    'WorkLifeBalance': 3,
-    'YearsAtCompany': 5,
-    'YearsInCurrentRole': 2,
-    'YearsSinceLastPromotion': 1,
-    'YearsWithCurrManager': 2
+    'Age': age, 'BusinessTravel': 1, 'DailyRate': 800, 'Department': 1,
+    'DistanceFromHome': distance, 'Education': 3, 'EducationField': 1,
+    'EmployeeCount': 1, 'EmployeeNumber': 1,
+    'EnvironmentSatisfaction': env_satisfaction, 'Gender': 1,
+    'HourlyRate': 65, 'JobInvolvement': 3, 'JobLevel': job_level,
+    'JobRole': 1, 'JobSatisfaction': job_satisfaction, 'MaritalStatus': 1,
+    'MonthlyIncome': monthly_income, 'MonthlyRate': 14000,
+    'NumCompaniesWorked': 1, 'Over18': 1, 'OverTime': overtime_val,
+    'PercentSalaryHike': 15, 'PerformanceRating': 3,
+    'RelationshipSatisfaction': 3, 'StandardHours': 80,
+    'StockOptionLevel': 0, 'TotalWorkingYears': total_working_years,
+    'TrainingTimesLastYear': 2, 'WorkLifeBalance': 3,
+    'YearsAtCompany': 5, 'YearsInCurrentRole': 2,
+    'YearsSinceLastPromotion': 1, 'YearsWithCurrManager': 2
 }
 
-# Convert to DataFrame
 input_df = pd.DataFrame([input_data])
 
-column_order = ['Age', 'BusinessTravel', 'DailyRate', 'Department', 'DistanceFromHome', 
-                'Education', 'EducationField', 'EmployeeCount', 'EmployeeNumber', 
-                'EnvironmentSatisfaction', 'Gender', 'HourlyRate', 'JobInvolvement', 
-                'JobLevel', 'JobRole', 'JobSatisfaction', 'MaritalStatus', 'MonthlyIncome', 
-                'MonthlyRate', 'NumCompaniesWorked', 'Over18', 'OverTime', 'PercentSalaryHike', 
-                'PerformanceRating', 'RelationshipSatisfaction', 'StandardHours', 
-                'StockOptionLevel', 'TotalWorkingYears', 'TrainingTimesLastYear', 
-                'WorkLifeBalance', 'YearsAtCompany', 'YearsInCurrentRole', 
-                'YearsSinceLastPromotion', 'YearsWithCurrManager']
+column_order = ['Age','BusinessTravel','DailyRate','Department','DistanceFromHome',
+'Education','EducationField','EmployeeCount','EmployeeNumber','EnvironmentSatisfaction',
+'Gender','HourlyRate','JobInvolvement','JobLevel','JobRole','JobSatisfaction',
+'MaritalStatus','MonthlyIncome','MonthlyRate','NumCompaniesWorked','Over18','OverTime',
+'PercentSalaryHike','PerformanceRating','RelationshipSatisfaction','StandardHours',
+'StockOptionLevel','TotalWorkingYears','TrainingTimesLastYear','WorkLifeBalance',
+'YearsAtCompany','YearsInCurrentRole','YearsSinceLastPromotion','YearsWithCurrManager']
 
 input_df = input_df[column_order]
 
-# Prediction
-if st.button('Predict Attrition'): 
+# Prediction button (CENTERED)
+col1, col2, col3 = st.columns([1,2,1])
+predict_btn = col2.button("🔍 Predict Attrition")
+
+if predict_btn:
     prediction = model.predict(input_df)
-   
+
+    st.write("")
     if prediction[0] == 1:
-        st.error('The model predicts this employee is LIKELY to leave.')
+        st.markdown(
+            "<div class='result-box' style='background-color:#FADBD8; color:#C0392B;'>⚠️ Employee is LIKELY to leave</div>",
+            unsafe_allow_html=True
+        )
     else:
-        st.success('The model predicts this employee is LIKELY to stay.')
+        st.markdown(
+            "<div class='result-box' style='background-color:#D5F5E3; color:#1E8449;'>✅ Employee is LIKELY to stay</div>",
+            unsafe_allow_html=True
+        )
